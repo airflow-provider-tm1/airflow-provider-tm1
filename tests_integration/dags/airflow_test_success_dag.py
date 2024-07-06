@@ -14,7 +14,7 @@ from datetime import datetime
 
 from airflow.utils.task_group import TaskGroup
 
-from airflow_providers_tm1.operators.tm1_run_ti import TM1RunTIOperator
+from airflow_provider_tm1.operators.tm1_run_ti import TM1RunTIOperator
 
 default_args = {
     'owner': 'airflow',
