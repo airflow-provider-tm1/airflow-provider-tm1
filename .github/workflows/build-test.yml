@@ -1,0 +1,75 @@
+name: Build & test Airflow
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+  workflow_dispatch:
+    
+jobs:
+
+  build:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    
+    steps:
+  
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt build
+        python -m build
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DUSERNAME }}
+        password: ${{ secrets.DPASSWORD }}
+    
+    - name: Install & Run Airflow
+      run: |
+        PYPACKAGE=$(ls dist | grep .whl)
+        cp "dist/${PYPACKAGE}" tests_integration/plugins/
+        cd tests_integration
+        echo "FROM apache/airflow:2.9.1" > Dockerfile
+        echo "ADD plugins/${PYPACKAGE} ." >> Dockerfile
+        echo "RUN pip install ${PYPACKAGE}" >> Dockerfile
+        echo -e "AIRFLOW_UID=$(id -u)" > .env
+        docker compose up -d airflow-init
+        docker compose up -d --build
+    
+    - name: Add TM1 connection to Airflow
+      run: |
+        DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
+        docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1-centos7 --conn-port 5360 --conn-schema "" --conn-extra ""
+
+    - name: Test Airflow TM1 provider
+      run: |
+        cd tests_integration
+        echo "Running tests..."
+        pip install pytest
+        pytest integration_test.py -s
+
+    - name: Archive production artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-test-logs
+        path: |
+          tests_integration/logs/*
+          tests_integration/tm1models/24Retail/tm1server.log
+          tests_integration/tm1models/24Retail/tm1processerror*.log
+    
+    - name: Stop docker containers
+      if: always()
+      run: |
+        cd tests_integration
+        docker compose down
+        
