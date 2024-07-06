@@ -298,13 +298,13 @@ services:
       - 5360:5360
     command: bash -c "/docker-entrypoint.sh && tail -F /dev/null"
 
-  arc:
-    container_name: arc
-    image: knowledgeseed/arc-linux64
-    ports:
-      - 7070:7070
-    volumes:
-      - ./settings.yml:/settings.yml
+  #arc:
+  #  container_name: arc
+  #  image: knowledgeseed/arc-linux64
+  #  ports:
+  #    - 7070:7070
+  #  volumes:
+  #    - ./settings.yml:/settings.yml
 
 volumes:
   postgres-db-volume:
