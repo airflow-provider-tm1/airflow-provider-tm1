@@ -40,7 +40,7 @@ with DAG(
         task_id='t1',
         tm1_conn_id='tm1_conn',
         process_name='airflow_test_timeout',
-        timeout=10,
+        timeout=3,
         cancel_at_timeout=True
     )
 
