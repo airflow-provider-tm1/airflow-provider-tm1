@@ -4,7 +4,7 @@
 
 A package by Knowledgeseed and Cubewise that provides a hook to simplify the connection to the IBM Cognos TM1 / Planning Analytics REST API.
 
-https://github.com/KnowledgeSeed/airflow-providers-tm1
+https://github.com/airflow-provider-tm1/airflow-provider-tm1
 
 This repository builds on https://github.com/MariusWirtz/airflow-tm1 and https://github.com/scrambldchannel/airflow-tm1 which offer only Airflow 1.x compatibility, and upgrades the provider to ensure Airflow 2.x compatibility. Some parts and have been reused from https://github.com/scrambldchannel/airflow-provider-tm1 as well.
 
