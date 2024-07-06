@@ -1,7 +1,0 @@
-{
-    "python.testing.pytestArgs": [
-        "tests_integration"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
-}

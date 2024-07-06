@@ -1,4 +1,4 @@
-# airflow-providers-tm1
+# airflow-provider-tm1
 
 ![CI Build](https://github.com/airflow-provider-tm1/airflow-provider-tm1/actions/workflows/build-test.yml/badge.svg)
 
