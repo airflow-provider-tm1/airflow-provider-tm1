@@ -38,7 +38,7 @@ class TM1Hook(BaseHook):
         # is there a use case without a connection in place?
         conn = self.get_connection(tm1_conn_id)
 
-        extra = conn.get_extra_dejson()
+        extra = conn.extra_dejson
         self.user: str = conn.login
         self.password: str = conn.get_password()
         self.namespace: str = conn.schema
@@ -55,7 +55,6 @@ class TM1Hook(BaseHook):
         self.password = conn.get_password()
 
         # get relevant extra params
-        extras = conn.extra_dejson
         self.ssl: bool = extra["ssl"] == "True"
         self.session_context = "Airflow"
 
