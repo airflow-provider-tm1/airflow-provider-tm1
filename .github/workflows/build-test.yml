@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ "main" ]
   pull_request_target:
-    types: [labeled]
+    types: [opened, synchronize, reopened, labeled]
     
   workflow_dispatch:
     
@@ -20,7 +20,7 @@ jobs:
     
     steps:
     - name: Checkout Code for fork PR
-      if: github.event_name == 'pull_request_target' || contains(github.event.pull_request.labels.*.name, 'safe to test')
+      if: github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test')
       uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha }}
