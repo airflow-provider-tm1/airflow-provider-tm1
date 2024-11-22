@@ -61,7 +61,7 @@ jobs:
     - name: Add TM1 connection to Airflow
       run: |
         DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
-        docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1-centos7 --conn-port 5360 --conn-schema "" --conn-extra ""
+        docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1 --conn-port 5360 --conn-schema "" --conn-extra ""
 
     - name: Test Airflow TM1 provider
       run: |
