@@ -101,5 +101,12 @@ def test_airflow_test_timeout_dag():
     assert_tm1server_log_contains("Process \"airflow_test_timeout\" executed by user \"Admin\"")
 
 
+def test_airflow_test_execute_mdx():
+    command = 'airflow dags test airflow_test_execute_mdx'
+    result, output = run_docker_exec(command)
+
+    assert_airflow_dag_failed(result)
+    assert_airflow_dag_log_contains('test1 dim values:[\'test1_dim1\' \'test_dim2\' \'test1_dim3\']', output)
+
 if __name__ == '__main__':
     pytest.main()
