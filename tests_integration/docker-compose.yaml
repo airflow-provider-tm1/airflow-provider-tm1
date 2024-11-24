@@ -286,25 +286,30 @@ services:
         condition: service_completed_successfully
 
   tm1:
-    container_name: tm1-centos7
-    image: knowledgeseed/tm1-docker:2.0.9.15-centos7
+    container_name: tm1
+    image: knowledgeseed/tm1-docker:2.0.9.15-centos9
     #environment:
     #  - DISPLAY=192.168.56.1:0.0
+  
     volumes:
       - ./tm1models:/docker-entrypoint-initdb.d/tm1models
       - ./cogstartup.xml:/docker-entrypoint-initdb.d/cogstartup.xml
+    healthcheck:
+      test: "curl -f http://localhost:5360/api/v1/"
+      interval: 5s
+      timeout: 2m
+      retries: 10
     ports:
       - 5898:5898
       - 5360:5360
-    command: bash -c "/docker-entrypoint.sh && tail -F /dev/null"
 
-  #arc:
-  #  container_name: arc
-  #  image: knowledgeseed/arc-linux64
-  #  ports:
-  #    - 7070:7070
-  #  volumes:
-  #    - ./settings.yml:/settings.yml
+  # arc:
+  #   container_name: arc
+  #   image: knowledgeseed/arc-linux64
+  #   ports:
+  #     - 7070:7070
+  #   volumes:
+  #     - ./settings.yml:/settings.yml
 
 volumes:
   postgres-db-volume:

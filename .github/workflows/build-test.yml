@@ -1,24 +1,29 @@
 name: Build & test Airflow
+env:
+  NAME: 'Snyk Demo'
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feature/*" ]
   pull_request_target:
     types: [opened, synchronize, reopened, labeled]
     
   workflow_dispatch:
-    
+  
 jobs:
 
   build:
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test'))
-      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == 'false') 
+    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test' && github.event.pull_request.head.repo.full_name != github.repository))
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) 
       || github.event_name == 'push'
     
     steps:
+    - name: Print the full name of the head repository
+      run: | 
+        echo "The PR head repository full name is: ${{ github.event.pull_request.head.repo.full_name }}"
+        echo "The head full name is: ${{ github.repository }}"
+
     - name: Checkout Code for fork PR
       if: github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test')
       uses: actions/checkout@v3
@@ -61,7 +66,12 @@ jobs:
     - name: Add TM1 connection to Airflow
       run: |
         DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
-        docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1-centos7 --conn-port 5360 --conn-schema "" --conn-extra ""
+        TM1_CONN=$(docker exec $DOCKID airflow connections list | grep tm1_conn) || true
+        if [ -z "$TM1_CONN" ]; then
+          docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1 --conn-port 5360 --conn-schema "" --conn-extra ""
+        else
+          echo "Connection already added: $TM1_CONN"
+        fi
 
     - name: Test Airflow TM1 provider
       run: |
@@ -85,4 +95,3 @@ jobs:
       run: |
         cd tests_integration
         docker compose down
-        
