@@ -23,7 +23,7 @@ def parse_and_filter(df: pd.DataFrame):
 
 
 with DAG(
-        'airflow_test_success_dag',
+        'airflow_test_execute_mdx',
         default_args=default_args,
         schedule_interval=None,
         start_date=days_ago(1),
