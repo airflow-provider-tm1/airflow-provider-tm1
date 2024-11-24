@@ -4,6 +4,8 @@ env:
 on:
   push:
     branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main", "feature/*" ]
   pull_request_target:
     types: [opened, synchronize, reopened, labeled]
     
@@ -14,16 +16,17 @@ jobs:
   build:
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test' && github.event.pull_request.head.repo.fork == 'true'))
-      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) 
+    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test'))
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == 'false') 
       || github.event_name == 'push'
     
     steps:
-    - name: Print the full name of the head repository
-      run: | 
-        echo "The PR head repository full name is: ${{ github.event.pull_request.head.repo.full_name }}"
-        echo "The head full name is: ${{ github.repository }}"
-
+    - name: Checkout Code for fork PR
+      if: github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test')
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    
     - name: Checkout Code for fork PR
       if: github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test')
       uses: actions/checkout@v3
