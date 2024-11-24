@@ -47,7 +47,7 @@ def assert_tm1server_log_contains(expected_line):
     assert found
     
 def assert_airflow_dag_log_contains(string, output):
-    assert string in output
+    assert string in output, output
 
 def assert_airflow_dag_completed(result):
     assert(result.returncode == 0)

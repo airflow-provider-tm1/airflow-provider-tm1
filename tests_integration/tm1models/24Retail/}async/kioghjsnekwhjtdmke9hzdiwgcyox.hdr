@@ -1,0 +1,8 @@
+HTTP/1.1 500 Internal Server Error
+Content-Length: 78
+Connection: keep-alive
+Content-Encoding: gzip
+Cache-Control: no-cache
+Content-Type: application/json; charset=utf-8
+OData-Version: 4.0
+
