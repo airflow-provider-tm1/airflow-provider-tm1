@@ -14,8 +14,9 @@ jobs:
   build:
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test' && github.event.pull_request.head.repo.fork == 'true'))
-      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == 'false') 
+
+    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test' && github.event.pull_request.head.repo.full_name != github.repository))
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) 
       || github.event_name == 'push'
     
     steps:
