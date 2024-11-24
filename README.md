@@ -23,6 +23,12 @@ python -m pip install -r requirements.txt
 python -m build
 ```
 
+To execute the automated test suite locally, you can leverage (https://github.com/nektos/act):
+
+```
+act -j build  -W .github/workflows/build-test.yml -s DUSERNAME=knowledgeseed -s DPASSWORD=<obtain access token to private DockerHub registry from KS>
+```
+
 ## Installation
 
 Install with pip `pip install airflow-provider-tm1`
