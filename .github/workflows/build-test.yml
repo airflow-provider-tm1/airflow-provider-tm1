@@ -8,11 +8,7 @@ on:
     types: [opened, synchronize, reopened, labeled]
     
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
+  
 jobs:
 
   build:
@@ -70,7 +66,7 @@ jobs:
     - name: Add TM1 connection to Airflow
       run: |
         DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
-        TM1_CONN=`docker exec $DOCKID airflow connections list | grep tm1_conn`
+        TM1_CONN=$(docker exec $DOCKID airflow connections list | grep tm1_conn)
         if [ -z "$TM1_CONN" ]; then
           docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1 --conn-port 5360 --conn-schema "" --conn-extra ""
         else
