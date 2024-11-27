@@ -57,11 +57,7 @@ jobs:
     - name: Install & Run Airflow
       run: |
         PYPACKAGE=$(ls dist | grep .whl)
-        cp "dist/${PYPACKAGE}" tests_integration/plugins/
         cd tests_integration
-        echo "FROM apache/airflow:2.9.1" > Dockerfile
-        echo "ADD plugins/${PYPACKAGE} ." >> Dockerfile
-        echo "RUN pip install ${PYPACKAGE}" >> Dockerfile
         echo -e "AIRFLOW_UID=$(id -u)" > .env
         docker compose up -d airflow-init
         docker compose up -d --build

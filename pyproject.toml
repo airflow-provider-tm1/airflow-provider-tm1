@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airflow-provider-tm1"
-version = "0.0.10"
+dynamic = ["version"]
 authors = [
   {name = "Akos Andras Nagy", email = "akos.nagy@knowledgeseed.ch"},
   {name = "Marius Wirtz", email = "mwirtz@cubewise.com"}
