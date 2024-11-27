@@ -34,7 +34,7 @@ class MDXQueryOperator(BaseOperator):
     :param fillna_string_attributes_value: Any, value with which to replace na if fillna_string_attributes is True
     :param tm1_conn_id: The Airflow connection used for TM1 credentials.
     :param tm1_dry_run: in Dry mode the Operator will skip the execution. Default value is False.
-    :param post_hook: A reference to a callable, which is executed taking after the MDX completed using its result DataFrame as input.
+    :param post_callable: A reference to a callable, which is executed taking after the MDX completed using its result DataFrame as input.
     :param op_kwargs: a dictionary of keyword arguments that will get unpacked
         in your function
     :param op_args: a list of positional arguments that will get unpacked when
@@ -73,7 +73,7 @@ class MDXQueryOperator(BaseOperator):
             fillna_string_attributes_value: Any = '',
             tm1_conn_id: str = "tm1_default",
             tm1_dry_run: bool = False,
-            post_hook: Callable = None,
+            post_callable: Callable = None,
             op_args: Collection[Any] | None = None,
             op_kwargs: Mapping[str, Any] | None = None,
             templates_dict: dict[str, Any] | None = None,
@@ -84,8 +84,8 @@ class MDXQueryOperator(BaseOperator):
     ) -> None:
         super().__init__(*args, **kwargs)
         self.mdx = mdx
-        if not callable(post_hook):
-            raise AirflowException("`post_hook` param must be callable")
+        if not callable(post_callable):
+            raise AirflowException("`post_callable` param must be callable")
         self.top = top
         self.skip = skip
         self.skip_zeros = skip_zeros
@@ -104,7 +104,7 @@ class MDXQueryOperator(BaseOperator):
         self.fillna_string_attributes_value = fillna_string_attributes_value
         self.tm1_conn_id = tm1_conn_id
         self.tm1_dry_run = tm1_dry_run
-        self.post_hook = post_hook
+        self.post_callable = post_callable
         self.op_args = op_args or ()
         self.op_kwargs = op_kwargs or {}
         self.templates_dict = templates_dict
@@ -146,7 +146,7 @@ class MDXQueryOperator(BaseOperator):
             print("Execution TM1 MDX " + self.mdx + " in dry-run mode")
 
     def determine_kwargs(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
-        return KeywordParameters.determine(self.post_hook, self.op_args, context).unpacking()
+        return KeywordParameters.determine(self.post_callable, self.op_args, context).unpacking()
 
     def execute_callable(self, df: pd.DataFrame) -> Any:
         """
@@ -154,7 +154,7 @@ class MDXQueryOperator(BaseOperator):
 
         :return: the return value of the call.
         """
-        return self.post_hook(df, *self.op_args, **self.op_kwargs)
+        return self.post_callable(df, *self.op_args, **self.op_kwargs)
 
 
 def context_merge(context: Context, *args: Any, **kwargs: Any) -> None:

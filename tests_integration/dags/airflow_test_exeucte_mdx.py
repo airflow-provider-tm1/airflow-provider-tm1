@@ -42,7 +42,7 @@ with DAG(
            ON ROWS 
            FROM [test1] 
            """,
-        post_hook=parse_and_filter
+        post_callable=parse_and_filter
     )
 
     t1
