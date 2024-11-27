@@ -10,7 +10,7 @@ from airflow.utils.operator_helpers import KeywordParameters
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 
 
-class MDXQueryOperator(BaseOperator):
+class TM1MDXQueryOperator(BaseOperator):
     """
     This operator executes an MDX query
 

@@ -4,7 +4,7 @@ import pandas as pd
 from airflow import DAG
 from airflow.utils.dates import days_ago
 
-from airflow_provider_tm1.operators.tm1_mdx_query import MDXQueryOperator
+from airflow_provider_tm1.operators.tm1_mdx_query import TM1MDXQueryOperator
 
 default_args = {
     'owner': 'airflow',
@@ -31,7 +31,7 @@ with DAG(
         catchup=False,
         max_active_runs=1
 ) as dag:
-    t1 = MDXQueryOperator(
+    t1 = TM1MDXQueryOperator(
         task_id='t1',
         tm1_conn_id='tm1_conn',
         mdx="""
