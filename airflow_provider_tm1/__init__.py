@@ -1,4 +1,5 @@
 """A TM1 provider package for Airflow"""
+# Please note that this version gets overridden during publish_to_pypi workflow upon a new release with the defined release number.
 __version__ = "0.0.10"
 
 import os
