@@ -11,5 +11,5 @@ RUN chmod u+x setup.py airflow_provider_tm1/__init__.py && \
     python -m pip install -r requirements.txt &&\
     python -m build
 USER airflow
-RUN VERSION=$(grep '__version__ =' airflow_provider_tm1/__init__.py | awk -F '"' '{print $2}') && \
+RUN VERSION=$(grep '__version__ =' airflow_provider_tm1/__init__.py | awk -F '"' '{print $2}' | head -1) && \
     pip install "dist/airflow_provider_tm1-$VERSION-py3-none-any.whl"
