@@ -26,7 +26,7 @@ def parse_and_filter(df: pd.DataFrame):
 
 
 with DAG(
-        'airflow_test_execute_mdx_mapped',
+        'airflow_test_execute_mdx_mapreduce',
         default_args=default_args,
         schedule_interval=None,
         start_date=days_ago(1),
