@@ -36,12 +36,15 @@ with DAG(
 ) as dag:
 
     @task
-    def join(dataframes):
+    def reduce(dataframes):
+        # Returning big dataframes in parse_and_filter and joining them in a list might have performance degration. 
+        # If the purpose of reduce() is merely to wait for all the chunks to complete, parse_and_filter should return only a flag or maybe the size of dataframe, but not the entire dataframe
+        # However, it might still have acceptable performance even when returning entire mapped dataframes if they are relatively small (and fit to xcom capabilities)
         print("Returned dataframe size: " + str(len(dataframes)))
 
 
     dataframes = TM1MDXQueryOperator.partial(
-        task_id="mapped_task",
+        task_id="map",
         tm1_conn_id='tm1_conn',
         post_callable=parse_and_filter
     ).expand(
@@ -64,6 +67,6 @@ with DAG(
            """],
     )
 
-    join(dataframes.output)
+    reduce(dataframes.output)
 
 
