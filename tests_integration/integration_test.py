@@ -108,5 +108,15 @@ def test_airflow_test_execute_mdx():
     assert_airflow_dag_log_contains('test1 dim values:[\'test1_dim1\' \'test_dim2\' \'test1_dim3\']', output)
     assert_airflow_dag_log_contains('test2 dim values:[\'test2_dim2\' \'test2_dim2\' \'test2_dim2\']', output)
 
+
+def test_airflow_test_execute_mdx_mapped():
+    command = 'airflow dags test airflow_test_execute_mdx'
+    result, output = run_docker_exec(command)
+
+    assert_airflow_dag_log_contains('test1 dim values:[\'test1_dim1\' \'test_dim2\' \'test1_dim3\']', output)
+    assert_airflow_dag_log_contains('test2 dim values:[\'test2_dim2\' \'test2_dim2\' \'test2_dim2\']', output)
+    assert_airflow_dag_log_contains('Returned dataframe size: 2', output)
+
+
 if __name__ == '__main__':
     pytest.main()
