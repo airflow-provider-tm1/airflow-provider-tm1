@@ -110,7 +110,7 @@ def test_airflow_test_execute_mdx():
 
 
 def test_airflow_test_execute_mdx_mapped():
-    command = 'airflow dags test airflow_test_execute_mdx'
+    command = 'airflow dags test airflow_test_execute_mdx_mapped'
     result, output = run_docker_exec(command)
 
     assert_airflow_dag_log_contains('test1 dim values:[\'test1_dim1\' \'test_dim2\' \'test1_dim3\']', output)
