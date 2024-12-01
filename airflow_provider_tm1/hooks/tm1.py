@@ -55,7 +55,7 @@ class TM1Hook(BaseHook):
         self.password = conn.get_password()
 
         # get relevant extra params
-        self.ssl: bool = extra["ssl"] == "True"
+        self.ssl: bool = extra.get("ssl", "False") == "True"
         self.session_context = "Airflow"
 
     def get_conn(self) -> TM1Service:
@@ -68,16 +68,28 @@ class TM1Hook(BaseHook):
                 raise AirflowException("Failed to create tm1 client. No tm1_conn_id provided")
 
             try:
-                self.client = TM1Service(
-                    # basic example
-                    address=self.address,
-                    port=self.port,
-                    user=self.user,
-                    password="" if self.password is None else self.password,
-                    ssl=self.ssl,
-                    namespace=self.namespace,
-                    session_context=self.session_context,
-                )
+                #todo: compatible with bsae url
+                # when port is None, self.address should be the base_url parameter in TM1Service
+                if self.port == '':
+                    self.client = TM1Service(
+                        address=self.address,
+                        user=self.user,
+                        password="" if self.password is None else self.password,
+                        ssl=self.ssl,
+                        namespace=self.namespace,
+                        session_context=self.session_context,
+                    )
+                else: 
+                    self.client = TM1Service(
+                        # basic example
+                        address=self.address,
+                        port=self.port,
+                        user=self.user,
+                        password="" if self.password is None else self.password,
+                        ssl=self.ssl,
+                        namespace=self.namespace,
+                        session_context=self.session_context,
+                    )
                 self.server_name = self.client.server.get_server_name()
                 self.server_version = self.client.server.get_product_version()
 
