@@ -67,7 +67,7 @@ jobs:
         DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
         TM1_CONN=$(docker exec $DOCKID airflow connections list | grep tm1_conn) || true
         if [ -z "$TM1_CONN" ]; then
-          docker exec $DOCKID airflow connections add tm1_conn --conn-type tm1 --conn-login admin --conn-host tm1 --conn-port 5360 --conn-schema "" --conn-extra ""
+          docker exec $DOCKID airflow connections add 'tm1_conn' --conn-json '{"conn_type": "tm1", "host": "tm1-centos7", "login": "admin", "schema": "", "port": 5360, "extra": {"ssl": "False"}}
         else
           echo "Connection already added: $TM1_CONN"
         fi
