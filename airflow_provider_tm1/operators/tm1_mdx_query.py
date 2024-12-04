@@ -113,35 +113,33 @@ class TM1MDXQueryOperator(BaseOperator):
         self.show_return_value_in_logs = show_return_value_in_logs
 
     def execute(self, context: dict) -> None:
-        tm1_hook = TM1Hook(tm1_conn_id=self.tm1_conn_id)
-        tm1 = tm1_hook.get_conn()
 
         if not self.tm1_dry_run:
 
-            df = tm1.cells.execute_mdx_dataframe(mdx=self.mdx, top=self.top, skip=self.skip, skip_zeros=self.skip_zeros,
-                                                 skip_consolidated_cells=self.skip_consolidated_cells,
-                                                 skip_rule_derived_cells=self.skip_rule_derived_cells,
-                                                 sandbox_name=self.sandbox_name,
-                                                 include_attributes=self.include_attributes,
-                                                 use_iterative_json=self.use_iterative_json,
-                                                 use_compact_json=self.use_compact_json,
-                                                 use_blob=self.use_blob, shaped=self.shaped,
-                                                 mdx_headers=self.mdx_headers,
-                                                 fillna_numeric_attributes=self.fillna_numeric_attributes,
-                                                 fillna_numeric_attributes_value=self.fillna_numeric_attributes_value,
-                                                 fillna_string_attributes=self.fillna_string_attributes,
-                                                 fillna_string_attributes_value=self.fillna_string_attributes_value)
+             with TM1Hook(tm1_conn_id=self.conn_id).get_conn() as tm1:
+                df = tm1.cells.execute_mdx_dataframe(mdx=self.mdx, top=self.top, skip=self.skip, skip_zeros=self.skip_zeros,
+                    skip_consolidated_cells=self.skip_consolidated_cells,
+                    skip_rule_derived_cells=self.skip_rule_derived_cells,
+                    sandbox_name=self.sandbox_name,
+                    include_attributes=self.include_attributes,
+                    use_iterative_json=self.use_iterative_json,
+                    use_compact_json=self.use_compact_json,
+                    use_blob=self.use_blob, shaped=self.shaped,
+                    mdx_headers=self.mdx_headers,
+                    fillna_numeric_attributes=self.fillna_numeric_attributes,
+                    fillna_numeric_attributes_value=self.fillna_numeric_attributes_value,
+                    fillna_string_attributes=self.fillna_string_attributes,
+                    fillna_string_attributes_value=self.fillna_string_attributes_value)
 
-            context_merge(context, self.op_kwargs, templates_dict=self.templates_dict)
-            self.op_kwargs = self.determine_kwargs(context)
+                context_merge(context, self.op_kwargs, templates_dict=self.templates_dict)
+                self.op_kwargs = self.determine_kwargs(context)
 
-            return_value = self.execute_callable(df)
-            if self.show_return_value_in_logs:
-                self.log.info("Done. Returned value was: %s", return_value)
-            else:
-                self.log.info("Done. Returned value not shown")
-            return return_value
-
+                return_value = self.execute_callable(df)
+                if self.show_return_value_in_logs:
+                    self.log.info("Done. Returned value was: %s", return_value)
+                else:
+                    self.log.info("Done. Returned value not shown")
+                return return_value
         else:
             print("Execution TM1 MDX " + self.mdx + " in dry-run mode")
 
