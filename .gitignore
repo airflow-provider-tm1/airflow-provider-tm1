@@ -139,5 +139,3 @@ logs/
 my.secrets
 
 *.log
-
-.vscode

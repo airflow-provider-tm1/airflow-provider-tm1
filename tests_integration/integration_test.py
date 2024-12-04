@@ -47,7 +47,7 @@ def assert_tm1server_log_contains(expected_line):
     assert found
     
 def assert_airflow_dag_log_contains(string, output):
-    assert string in output
+    assert string in output, output
 
 def assert_airflow_dag_completed(result):
     assert(result.returncode == 0)
@@ -99,6 +99,23 @@ def test_airflow_test_timeout_dag():
     assert_airflow_dag_failed(result)
     assert_airflow_dag_log_contains('Timeout after 3 seconds', output)
     assert_tm1server_log_contains("Process \"airflow_test_timeout\" executed by user \"Admin\"")
+
+
+def test_airflow_test_execute_mdx():
+    command = 'airflow dags test airflow_test_execute_mdx'
+    result, output = run_docker_exec(command)
+
+    assert_airflow_dag_log_contains('test1 dim values:[\'test1_dim1\' \'test_dim2\' \'test1_dim3\']', output)
+    assert_airflow_dag_log_contains('test2 dim values:[\'test2_dim2\' \'test2_dim2\' \'test2_dim2\']', output)
+
+
+def test_airflow_test_execute_mdx_mapreduce():
+    command = 'airflow dags test airflow_test_execute_mdx_mapreduce'
+    result, output = run_docker_exec(command)
+
+    assert_airflow_dag_log_contains('test1 dim values:[\'test1_dim1\' \'test_dim2\' \'test1_dim3\']', output)
+    assert_airflow_dag_log_contains('test2 dim values:[\'test2_dim2\' \'test2_dim2\' \'test2_dim2\']', output)
+    assert_airflow_dag_log_contains('Returned dataframe size: 2', output)
 
 
 if __name__ == '__main__':
