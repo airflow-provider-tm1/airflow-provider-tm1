@@ -1,18 +1,8 @@
-import os
-import shutil
 from datetime import timedelta
-from pathlib import Path
 
 from airflow import DAG
-from airflow.example_dags.example_task_group_decorator import task_2
-from airflow.models import Variable
-from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.dates import days_ago
-from datetime import datetime
 
-from airflow.utils.task_group import TaskGroup
 
 from airflow_provider_tm1.operators.tm1_run_ti import TM1RunTIOperator
 
