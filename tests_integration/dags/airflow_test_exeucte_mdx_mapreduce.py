@@ -46,25 +46,17 @@ with DAG(
     dataframes = TM1MDXQueryOperator.partial(
         task_id="map",
         tm1_conn_id='tm1_conn',
-        post_callable=parse_and_filter
+        post_callable=parse_and_filter,
+        mdx="""
+               SELECT 
+               {[test2].[test2].Members} 
+               ON COLUMNS , 
+               {[test1].[{{ task.op_kwargs['dim_name'] }}].Members} 
+               ON ROWS 
+               FROM [test1] 
+               """
     ).expand(
-        mdx=["""
-           SELECT 
-           {[test2].[test2].Members} 
-           ON COLUMNS , 
-           {[test1].[test1].Members} 
-           ON ROWS 
-           FROM [test1] 
-           """,
-
-           """
-           SELECT 
-           {[test2].[test2].Members} 
-           ON COLUMNS , 
-           {[test1].[test1].Members} 
-           ON ROWS 
-           FROM [test1] 
-           """],
+        op_kwargs=[{"dim_ref": "test1"}, {"dim_ref": "test1"}]
     )
 
     reduce(dataframes.output)

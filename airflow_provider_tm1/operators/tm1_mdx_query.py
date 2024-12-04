@@ -6,6 +6,7 @@ from airflow.models import BaseOperator
 from airflow.utils.context import Context
 from airflow.utils.decorators import apply_defaults
 from airflow.utils.operator_helpers import KeywordParameters
+from airflow.utils.context import context_merge
 
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 
@@ -51,9 +52,22 @@ class TM1MDXQueryOperator(BaseOperator):
         such as transmission a large amount of XCom to TaskAPI.
     """
 
+    template_fields: Sequence[str] = ("templates_dict", "op_args", "op_kwargs", "mdx")
+    template_fields_renderers = {"templates_dict": "json", "op_args": "py", "op_kwargs": "py", "mdx": "mdx"}
+    BLUE = "#ffefeb"
+    ui_color = BLUE
+
+    # since we won't mutate the arguments, we should just do the shallow copy
+    # there are some cases we can't deepcopy the objects(e.g protobuf).
+    shallow_copy_attrs: Sequence[str] = (
+        "post_callable",
+        "op_kwargs",
+    )
+
     @apply_defaults
     def __init__(
             self,
+            *,
             mdx: str,
             top: int = None,
             skip: int = None,
@@ -73,16 +87,16 @@ class TM1MDXQueryOperator(BaseOperator):
             fillna_string_attributes_value: Any = '',
             tm1_conn_id: str = "tm1_default",
             tm1_dry_run: bool = False,
+            tm1_params: dict = {},
             post_callable: Callable = None,
             op_args: Collection[Any] | None = None,
             op_kwargs: Mapping[str, Any] | None = None,
             templates_dict: dict[str, Any] | None = None,
             templates_exts: Sequence[str] | None = None,
             show_return_value_in_logs: bool = True,
-            *args,
             **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.mdx = mdx
         if not callable(post_callable):
             raise AirflowException("`post_callable` param must be callable")
@@ -104,6 +118,7 @@ class TM1MDXQueryOperator(BaseOperator):
         self.fillna_string_attributes_value = fillna_string_attributes_value
         self.tm1_conn_id = tm1_conn_id
         self.tm1_dry_run = tm1_dry_run
+        self.tm1_params = tm1_params
         self.post_callable = post_callable
         self.op_args = op_args or ()
         self.op_kwargs = op_kwargs or {}
@@ -112,24 +127,27 @@ class TM1MDXQueryOperator(BaseOperator):
             self.template_ext = templates_exts
         self.show_return_value_in_logs = show_return_value_in_logs
 
-    def execute(self, context: dict) -> None:
+    def execute(self, context: Context) -> None:
 
         if not self.tm1_dry_run:
 
-             with TM1Hook(tm1_conn_id=self.tm1_conn_id).get_conn() as tm1:
-                df = tm1.cells.execute_mdx_dataframe(mdx=self.mdx, top=self.top, skip=self.skip, skip_zeros=self.skip_zeros,
-                    skip_consolidated_cells=self.skip_consolidated_cells,
-                    skip_rule_derived_cells=self.skip_rule_derived_cells,
-                    sandbox_name=self.sandbox_name,
-                    include_attributes=self.include_attributes,
-                    use_iterative_json=self.use_iterative_json,
-                    use_compact_json=self.use_compact_json,
-                    use_blob=self.use_blob, shaped=self.shaped,
-                    mdx_headers=self.mdx_headers,
-                    fillna_numeric_attributes=self.fillna_numeric_attributes,
-                    fillna_numeric_attributes_value=self.fillna_numeric_attributes_value,
-                    fillna_string_attributes=self.fillna_string_attributes,
-                    fillna_string_attributes_value=self.fillna_string_attributes_value)
+            with TM1Hook(tm1_conn_id=self.tm1_conn_id).get_conn() as tm1:
+                df = tm1.cells.execute_mdx_dataframe(mdx=self.mdx, top=self.top, skip=self.skip,
+                                                     skip_zeros=self.skip_zeros,
+                                                     skip_consolidated_cells=self.skip_consolidated_cells,
+                                                     skip_rule_derived_cells=self.skip_rule_derived_cells,
+                                                     sandbox_name=self.sandbox_name,
+                                                     include_attributes=self.include_attributes,
+                                                     use_iterative_json=self.use_iterative_json,
+                                                     use_compact_json=self.use_compact_json,
+                                                     use_blob=self.use_blob, shaped=self.shaped,
+                                                     mdx_headers=self.mdx_headers,
+                                                     fillna_numeric_attributes=self.fillna_numeric_attributes,
+                                                     fillna_numeric_attributes_value=self.fillna_numeric_attributes_value,
+                                                     fillna_string_attributes=self.fillna_string_attributes,
+                                                     fillna_string_attributes_value=self.fillna_string_attributes_value,
+                                                     **self.tm1_params,
+                                                     )
 
                 context_merge(context, self.op_kwargs, templates_dict=self.templates_dict)
                 self.op_kwargs = self.determine_kwargs(context)
@@ -153,18 +171,3 @@ class TM1MDXQueryOperator(BaseOperator):
         :return: the return value of the call.
         """
         return self.post_callable(df, *self.op_args, **self.op_kwargs)
-
-
-def context_merge(context: Context, *args: Any, **kwargs: Any) -> None:
-    """Merge parameters into an existing context.
-
-    Like ``dict.update()`` , this take the same parameters, and updates
-    ``context`` in-place.
-
-    This is implemented as a free function because the ``Context`` type is
-    "faked" as a ``TypedDict`` in ``context.pyi``, which cannot have custom
-    functions.
-
-    :meta private:
-    """
-    context.update(*args, **kwargs)

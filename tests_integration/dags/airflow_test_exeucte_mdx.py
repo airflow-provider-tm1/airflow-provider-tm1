@@ -38,10 +38,11 @@ with DAG(
            SELECT 
            {[test2].[test2].Members} 
            ON COLUMNS , 
-           {[test1].[test1].Members} 
+           {[test1].[{{ task.op_kwargs.dim_ref }}].Members} 
            ON ROWS 
            FROM [test1] 
            """,
+        op_kwargs={"dim_ref": "test1"},
         post_callable=parse_and_filter
     )
 
