@@ -116,7 +116,7 @@ class TM1MDXQueryOperator(BaseOperator):
 
         if not self.tm1_dry_run:
 
-             with TM1Hook(tm1_conn_id=self.conn_id).get_conn() as tm1:
+             with TM1Hook(tm1_conn_id=self.tm1_conn_id).get_conn() as tm1:
                 df = tm1.cells.execute_mdx_dataframe(mdx=self.mdx, top=self.top, skip=self.skip, skip_zeros=self.skip_zeros,
                     skip_consolidated_cells=self.skip_consolidated_cells,
                     skip_rule_derived_cells=self.skip_rule_derived_cells,
