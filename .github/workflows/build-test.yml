@@ -79,6 +79,13 @@ jobs:
         pip install pytest
         pytest integration_test.py -s
 
+    - name: Unittests
+      run: |
+        cd unittests
+        echo "Running unittests..."
+        pip install pytest
+        pytest -s
+
     - name: Archive production artifacts
       if: always()
       uses: actions/upload-artifact@v4
