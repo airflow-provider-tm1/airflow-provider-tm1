@@ -9,7 +9,7 @@ template = {
     }
 }
 
-def compose(payload: dict):
+def compose(cube_name, payload: dict):
     """
     consume the dictionary, 
     """
@@ -36,8 +36,14 @@ def compose(payload: dict):
     subset_mdx_list: list[str] = list(map(compose_subset_mdx, payload.keys(), payload.values()))
 
     #todo:join them into cube query mdx
+    if len(subset_mdx_list) == 1: 
+        raise ValueError('by TM1 cube design, the cube with single diemnsion is not exists')
+    
+    rows, columns = subset_mdx_list[0], subset_mdx_list[1:]
+    mdx = f'SELECT {rows} ON ROWS, {" * ".join(columns)} ON COLUMNS FROM [{cube_name}]'
 
+    return mdx
     #? need to validate cube? 
     
 if __name__ == '__main__': 
-    compose(payload=template)
+    print(compose(cube_name='Cube', payload=template))
