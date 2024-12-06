@@ -1,9 +1,17 @@
+#todo: build the template 
+template = {
+    'dim': {
+        'hierarchy': 'hie_name', 
+        'value': 'element',
+        'subset_mdx': '{{mdx}}'
+    }
+}
+
 def compose():
     """
-    consume the dictionary, , 
+    consume the dictionary, 
     """
 
-    #todo: build the template 
     #todo: parse it to subset mdx for each 
     #todo:join them into cube query mdx 
 
