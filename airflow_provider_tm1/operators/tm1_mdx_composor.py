@@ -25,14 +25,19 @@ def compose(payload: dict):
 
         hierarchy = subset_payload.get('hierarchy', dimension)
         
+        #! be careful on the ] or any other special character 
+        #* https://www.ibm.com/docs/en/planning-analytics/2.0.0?topic=reports-naming-conventions
+        dimension = value.replace(']', ']]')        
+        hierarchy = hierarchy.replace(']', ']]')
+        value = value.replace(']', ']]')
+        
         return f'{{[{dimension}].[{hierarchy}].[{value}]}}' if value else mdx
 
     subset_mdx_list: list[str] = list(map(compose_subset_mdx, payload.keys(), payload.values()))
 
-    #todo:join them into cube query mdx 
+    #todo:join them into cube query mdx
 
     #? need to validate cube? 
-    #! be careful on the ] or any other special character 
     
 if __name__ == '__main__': 
     compose(payload=template)
