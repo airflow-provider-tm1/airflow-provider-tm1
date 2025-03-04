@@ -73,7 +73,7 @@ class TM1Hook(BaseHook):
                     address=self.address,
                     port=self.port,
                     user=self.user,
-                    password="" if self.password is None else self.password,
+                    password=self.password,
                     ssl=self.ssl,
                     namespace=self.namespace,
                     session_context=self.session_context)
