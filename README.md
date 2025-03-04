@@ -37,12 +37,11 @@ Install with pip `pip install airflow-provider-tm1`
 
 Create a connection in Airflow with at least the following parameters set:
 
-* Host
-* Login
-* Password
-* Port
-* Extras
-  * ssl
+* **TM1 11 on-premise**: BaseURL (or Address+Port+SSL), User, Password
+* **TM1 11 on IBM cloud**: BaseURL, Namespace, User. Password, Extras/async_requests_mode, Extras/verify 
+* **TM1 12 PAaaS**:  BaseURL, User, Password, Extras/async_requests_mode, Extras/verify 
+* **TM1 12 on-premise & Cloud Pak For Data**: BaseURL (or Address + Extras/instance + Extras/database), Extras/application_client_id, Extras/application_client_secret, User
+* **TM1 12 on-premise with access token**:  BaseURL (or Address + Extras/instance + Extras/database), User, Extras/access_token, Extras/async_requests_mode, Extras/verify
 
 Any other parameter accepted by the TM1py RestService constructor (eg base_url, namespace etc) can also be added as a key in the Extras field in the connection.
 
