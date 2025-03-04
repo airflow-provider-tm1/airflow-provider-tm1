@@ -67,10 +67,6 @@ class TM1Hook(BaseHook):
             if not self.tm1_conn_id:
                 raise AirflowException("Failed to create tm1 client. No tm1_conn_id provided")
 
-            self.log.info("addressxx " + str(self.address))
-            self.log.info("basurlxx " + str(self.base_url))
-            self.log.info("passwordss " + str(self.password))
-            self.log.info("userxx " + str(self.user))
             try:
                 self.client = TM1Service(
                     base_url=self.base_url,
