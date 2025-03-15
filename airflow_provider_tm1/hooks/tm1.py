@@ -39,23 +39,23 @@ class TM1Hook(BaseHook):
         conn = self.get_connection(tm1_conn_id)
 
         extra = conn.extra_dejson
-        self.user: str = conn.login
-        self.password: str = conn.get_password()
-        self.namespace: str = conn.schema
-
-        # is this the best way to acccess the connection?
-        # or should I use helper methods instead?
-        self.address: str = conn.host
-        self.port: str = str(conn.port)
 
         # it might nice to be able to initialise and use the hook without
         # authenticating in order to ping a public endpoint to see if it's down
         # I think this will die if these aren't provided (or will it just given empty strings)
-        self.user = conn.login
-        self.password = conn.get_password()
+        self.user: str = None if conn.login == "" else conn.login
+        self.password: str = "" if conn.get_password() is None else conn.get_password()
+        self.namespace: str = None if conn.schema == "" else conn.schema
+
+        # is this the best way to acccess the connection?
+        # or should I use helper methods instead?
+        self.address: str = None if conn.host == "" else conn.host
+        self.port: str = None if conn.port == "" else conn.port
 
         # get relevant extra params
         self.ssl: bool = extra.get("ssl", "False") == "True"
+
+        self.base_url: str = None if extra.get("base_url") == "" else extra.get("base_url")
         self.session_context = "Airflow"
 
     def get_conn(self) -> TM1Service:
@@ -68,28 +68,16 @@ class TM1Hook(BaseHook):
                 raise AirflowException("Failed to create tm1 client. No tm1_conn_id provided")
 
             try:
-                #todo: compatible with bsae url
-                # when port is None, self.address should be the base_url parameter in TM1Service
-                if self.port == '':
-                    self.client = TM1Service(
-                        address=self.address,
-                        user=self.user,
-                        password="" if self.password is None else self.password,
-                        ssl=self.ssl,
-                        namespace=self.namespace,
-                        session_context=self.session_context,
-                    )
-                else: 
-                    self.client = TM1Service(
-                        # basic example
-                        address=self.address,
-                        port=self.port,
-                        user=self.user,
-                        password="" if self.password is None else self.password,
-                        ssl=self.ssl,
-                        namespace=self.namespace,
-                        session_context=self.session_context,
-                    )
+                self.client = TM1Service(
+                    base_url=self.base_url,
+                    address=self.address,
+                    port=self.port,
+                    user=self.user,
+                    password=self.password,
+                    ssl=self.ssl,
+                    namespace=self.namespace,
+                    session_context=self.session_context)
+                
                 self.server_name = self.client.server.get_server_name()
                 self.server_version = self.client.server.get_product_version()
 
@@ -131,13 +119,17 @@ class TM1Hook(BaseHook):
                 widget=BS3TextFieldWidget(),
                 description=lazy_gettext("True or False"),
             ),
+            "base_url": StringField(
+                lazy_gettext("BaseURL"),
+                widget=BS3TextFieldWidget(),
+                description=lazy_gettext("BaseURL encapsulates SSL, address and port for TM1 11 on-premise or address, instance, database for TM1 12"),
+            ),
         }
 
     @classmethod
     def get_ui_field_behaviour(cls) -> Dict[str, Any]:
         return {
             "hidden_fields": [
-                "extra",
             ],
             "relabeling": {
                 "host": "Address",
