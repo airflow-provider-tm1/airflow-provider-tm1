@@ -51,3 +51,11 @@ class TM1BlobStorage(AbstractFileSystem):
         if not self._tm1:
             raise ValueError("TM1Service instance is not registered. Use register_tm1_service() to set it.")
         self._tm1.files.delete(path)
+        
+    def find(self, *name_contains, path: str = '.', name_contains_operator: str = 'and'):
+        if not self._tm1:
+            raise ValueError("TM1Service instance is not registered. Use register_tm1_service() to set it.")
+        return self._tm1.files.search_string_in_name(name_contains=name_contains,
+                                              path=path,
+                                              name_contains_operator=name_contains_operator)
+
