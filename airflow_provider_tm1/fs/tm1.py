@@ -1,7 +1,22 @@
 from fsspec import AbstractFileSystem 
 from TM1py import TM1Service
-import io 
+import io
+from airflow_provider_tm1.hooks.tm1 import TM1Hook 
+import logging 
 
+from fsspec import AbstractFileSystem 
+from TM1py import TM1Service
+import io
+
+
+log = logging.getLogger(__name__)
+
+def get_fs(conn_id: str | None = None, storage_options: dict | None = None) -> AbstractFileSystem:
+    if conn_id is None:
+        conn_id = TM1Hook.default_conn_name
+    tm1_hook = TM1Hook(tm1_conn_id=conn_id)
+    tm1_service = tm1_hook.get_conn()
+    return TM1BlobStorage(tm1_service=tm1_service, **(storage_options or {}))
 
 class TM1Blob(io.BytesIO):
     def __init__(self, buffer: bytes, tm1_service: TM1Service, path: str, mode='rb'):
@@ -59,3 +74,8 @@ class TM1BlobStorage(AbstractFileSystem):
                                               path=path,
                                               name_contains_operator=name_contains_operator)
 
+    def __del__(self):
+        """Ensure the TM1 service is properly closed when the file system is deleted."""
+        if self._tm1:
+            self._tm1.logout()
+            self._tm1 = None
