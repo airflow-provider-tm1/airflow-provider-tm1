@@ -44,6 +44,8 @@ def write_tm1_file(**context):
     test_file = ObjectStoragePath("tm1://test_file.txt", conn_id="tm1_default")
     test_file.write_bytes(b"This is a sample output file written to TM1.")
     print("✅ Sample output file written to TM1")
+    import time 
+    time.sleep(1)
     return test_file
         
 @task(
@@ -55,6 +57,8 @@ def read_tm1_file(path: ObjectStoragePath, **context):
     print(f"Reading file from TM1: {path}")
     content = path.read_bytes()
     print(f"✅ Read file from TM1: {len(content)} characters")
+    return path
+    
 
 @dag(
     dag_id='tm1_filesystem_example',
@@ -69,7 +73,6 @@ def tm1_filesystem_example_dag():
     write_file_task = write_tm1_file()
     read_file_task = read_tm1_file(path=write_file_task)
     read_tm1_file.override(task_id='read_tm1_file_expanded').expand(path=list_files_task)
-
 
 tm1_filesystem_example_dag()
 
