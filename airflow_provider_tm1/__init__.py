@@ -30,5 +30,8 @@ def get_provider_info():
                 "hook-class-name": "airflow_provider_tm1.hooks.tm1.TM1Hook",
             },
         ],
+        "filesystems": [
+            "airflow_provider_tm1.fs",
+        ],
         "version": [get_version()],
     }
