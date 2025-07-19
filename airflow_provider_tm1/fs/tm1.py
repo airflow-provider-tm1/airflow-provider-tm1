@@ -36,8 +36,18 @@ class TM1BlobStorage(AbstractFileSystem):
         super().__init__(**kwargs)
         self._tm1 = tm1_service
         
+    def exists(self, path, **kwargs):
+        """Check if a file exists in TM1."""
+        log.info(f"Checking existence of path: {path}")
+        if path.startswith('/') and not path.startswith('//'):
+            path = path[1:]
+        if not self._tm1:
+            raise ValueError("TM1Service instance is not registered. Use register_tm1_service() to set it.")
+        return self._tm1.files.exists(path)
+        
     def ls(self, path, **kwargs):
         """List files in a given TM1 path."""
+        log.info(f"Listing files in path: {path}")
         if not self._tm1:
             raise ValueError("TM1Service instance is not registered. Use register_tm1_service() to set it.")
         if path == '/':
@@ -47,6 +57,9 @@ class TM1BlobStorage(AbstractFileSystem):
 
     def open(self, path, mode='rb', **kwargs):
         """Open a file in TM1."""
+        log.info(f"Opening file: {path} in mode: {mode}")
+        if path.startswith('/') and not path.startswith('//'):
+            path = path[1:]
         if not self._tm1:
             raise ValueError("TM1Service instance is not registered. Use register_tm1_service() to set it.")
         if mode not in ['rb', 'wb']:
@@ -63,6 +76,9 @@ class TM1BlobStorage(AbstractFileSystem):
 
     def rm(self, path, **kwargs):
         """Remove a file in TM1."""
+        log.info(f"Removing file: {path}")
+        if path.startswith('/') and not path.startswith('//'):
+            path = path[1:]
         if not self._tm1:
             raise ValueError("TM1Service instance is not registered. Use register_tm1_service() to set it.")
         self._tm1.files.delete(path)
