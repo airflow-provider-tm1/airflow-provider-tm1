@@ -1,6 +1,5 @@
 from typing import Any, Callable, Collection, Mapping, Sequence
 
-import pandas as pd
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.utils.context import Context
@@ -164,7 +163,7 @@ class TM1MDXQueryOperator(BaseOperator):
     def determine_kwargs(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
         return KeywordParameters.determine(self.post_callable, self.op_args, context).unpacking()
 
-    def execute_callable(self, df: pd.DataFrame) -> Any:
+    def execute_callable(self, df) -> Any:
         """
         Call the python callable with the given arguments.
 
