@@ -1,6 +1,5 @@
 FROM apache/airflow:2.11.0-python3.11
 RUN pip install pandas
-#RUN pip install tm1-bedrock-py
 RUN mkdir -p /opt/airflow/csv
 
 ADD airflow_provider_tm1 /tmp/airflow_provider_tm1
