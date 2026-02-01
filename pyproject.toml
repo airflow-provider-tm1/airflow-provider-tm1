@@ -34,10 +34,9 @@ find = {namespaces = false}
 [project.entry-points."apache_airflow_provider"]
 provider_info = "airflow_provider_tm1.__init__:get_provider_info"
 
-
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py311", "py312"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
