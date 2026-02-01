@@ -1,13 +1,10 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "airflow-provider-tm1"
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 authors = [
   {name = "Akos Andras Nagy", email = "akos.nagy@knowledgeseed.ch"},
   {name = "Marius Wirtz", email = "mwirtz@cubewise.com"}
@@ -19,11 +16,7 @@ maintainers = [
 description = "A package to simplify connecting to the TM1 REST API from Apache Airflow"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.7"
-dependencies = [
-  "apache-airflow >= 2.3",
-  "tm1py >= 1.1"
-]
+requires-python = ">=3.11"
 
 [project.urls]
 Documentation = "https://github.com/airflow-provider-tm1/airflow-provider-tm1/blob/master/README.md"
@@ -34,27 +27,27 @@ Changelog = "https://github.com/airflow-provider-tm1/airflow-provider-tm1/CHANGE
 [tool.setuptools.packages]
 find = {namespaces = false} 
 
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
 [project.entry-points."apache_airflow_provider"]
 provider_info = "airflow_provider_tm1.__init__:get_provider_info"
 
-
 [tool.black]
 line-length = 120
-target-version = ["py39"]
+target-version = ["py311", "py312"]
 include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.mypy_cache
-    | _build
-    | buck-out
-    | build
-    | dist
-  )
-)
+extend-exclude = '''
+/(
+  \.eggs
+  | \.git
+  | \.mypy_cache
+  | _build
+  | buck-out
+  | build
+  | dist
+  | __pycache__
+)/
 '''
 
 [tool.isort]
