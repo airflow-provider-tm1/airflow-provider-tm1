@@ -85,7 +85,7 @@ class TM1RunTIOperator(BaseOperator):
 
 
         else:
-            print("Triggering TM1 " + self.process_name + " in dry-run mode with timeout " + str(self.tm1_timeout) + " with parameters ", self.tm1_ti_params)
+            print("Triggering TM1 " + self.process_name + " in dry-run mode with timeout " + str(self.timeout) + " with parameters ", self.tm1_params)
 
 def parse_ti_response(response):
     execution_summary = response.json()

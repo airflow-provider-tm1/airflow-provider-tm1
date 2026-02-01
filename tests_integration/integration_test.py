@@ -118,5 +118,13 @@ def test_airflow_test_execute_mdx_mapreduce():
     assert_airflow_dag_log_contains('Returned dataframe size: 2', output)
 
 
+def test_airflow_test_dry_run():
+    command = 'airflow dags test airflow_test_dry_run_dag'
+    result, output = run_docker_exec(command)
+
+    assert_airflow_dag_completed(result)
+    assert_airflow_dag_log_contains("Triggering TM1 airflow_test_success in dry-run mode with timeout 300 with parameters  {'async_request_mode': True}", output)
+
+
 if __name__ == '__main__':
     pytest.main()
