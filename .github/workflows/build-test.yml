@@ -19,6 +19,17 @@ jobs:
     if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test') && github.event.pull_request.head.repo.fork)
       || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) 
       || github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - airflow-version: "2.11"
+            base-image: "apache/airflow:2.11.0-python3.11"
+            display-name: "Airflow 2.11"
+          - airflow-version: "3.0"
+            base-image: "apache/airflow:3.0.6-python3.11"
+            display-name: "Airflow 3.0"
+    name: Build & test (${{ matrix.display-name }})
     
     steps:
     - name: Checkout Code for fork PR
@@ -55,10 +66,13 @@ jobs:
         password: ${{ secrets.DPASSWORD }}
     
     - name: Install & Run Airflow
+      env:
+        AIRFLOW_BASE_IMAGE: ${{ matrix.base-image }}
       run: |
         PYPACKAGE=$(ls dist | grep .whl)
         cd tests_integration
         echo -e "AIRFLOW_UID=$(id -u)" > .env
+        echo -e "AIRFLOW_BASE_IMAGE=${AIRFLOW_BASE_IMAGE}" >> .env
         docker compose up -d airflow-init
         docker compose up -d --build
     
@@ -83,7 +97,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: integration-test-logs
+        name: integration-test-logs-airflow-${{ matrix.airflow-version }}
         path: |
           tests_integration/logs/*
           tests_integration/tm1models/24Retail/tm1server.log

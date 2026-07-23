@@ -1,7 +1,6 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.utils.dates import days_ago
 
 from airflow_provider_tm1.operators.tm1_run_ti import TM1RunTIOperator
 
@@ -19,8 +18,8 @@ default_args = {
 with DAG(
         'airflow_test_dry_run_dag',
         default_args=default_args,
-        schedule_interval=None,
-        start_date=days_ago(1),
+        schedule=None,
+        start_date=datetime(2025, 1, 1),
         tags=[],
         catchup=False,
         max_active_runs=1

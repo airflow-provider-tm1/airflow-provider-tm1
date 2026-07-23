@@ -1,11 +1,12 @@
 from typing import Any, Callable, Collection, Mapping, Sequence
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
-from airflow.utils.context import Context
-from airflow.utils.decorators import apply_defaults
-from airflow.utils.operator_helpers import KeywordParameters
-from airflow.utils.context import context_merge
+from airflow.providers.common.compat.sdk import (
+    BaseOperator,
+    Context,
+    KeywordParameters,
+    context_merge,
+)
 
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 
@@ -63,7 +64,6 @@ class TM1MDXQueryOperator(BaseOperator):
         "op_kwargs",
     )
 
-    @apply_defaults
     def __init__(
             self,
             *,

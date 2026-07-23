@@ -1,4 +1,7 @@
-FROM apache/airflow:2.11.0-python3.11
+# Base Airflow image is parameterized via build-arg so the same Dockerfile
+# can build against either Airflow 2.11 or 3.x (see docker-compose.yaml / CI matrix).
+ARG AIRFLOW_BASE_IMAGE=apache/airflow:2.11.0-python3.11
+FROM ${AIRFLOW_BASE_IMAGE}
 RUN pip install pandas
 RUN mkdir -p /opt/airflow/csv
 

@@ -1,18 +1,6 @@
-import os
-import shutil
-from datetime import timedelta
-from pathlib import Path
+from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.example_dags.example_task_group_decorator import task_2
-from airflow.models import Variable
-from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.utils.dates import days_ago
-from datetime import datetime
-
-from airflow.utils.task_group import TaskGroup
 
 from airflow_provider_tm1.operators.tm1_run_ti import TM1RunTIOperator
 
@@ -30,8 +18,8 @@ default_args = {
 with DAG(
         'airflow_test_aborted_dag',
         default_args=default_args,
-        schedule_interval=None,
-        start_date=days_ago(1),
+        schedule=None,
+        start_date=datetime(2025, 1, 1),
         tags=[],
         catchup=False,
         max_active_runs=1

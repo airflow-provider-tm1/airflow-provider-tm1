@@ -5,8 +5,8 @@ from flask_babel import lazy_gettext
 from TM1py.Services import TM1Service
 from wtforms import StringField
 
+from airflow.providers.common.compat.sdk import BaseHook
 from airflow.exceptions import AirflowException
-from airflow.hooks.base import BaseHook
 
 
 class TM1Hook(BaseHook):
@@ -43,8 +43,10 @@ class TM1Hook(BaseHook):
         # it might nice to be able to initialise and use the hook without
         # authenticating in order to ping a public endpoint to see if it's down
         # I think this will die if these aren't provided (or will it just given empty strings)
+        # NOTE: use the `password` attribute directly (not `get_password()`, which
+        # was removed in Airflow 3; the attribute exists in both 2.x and 3.x).
         self.user: str = None if conn.login == "" else conn.login
-        self.password: str = "" if conn.get_password() is None else conn.get_password()
+        self.password: str = "" if conn.password is None else conn.password
         self.namespace: str = None if conn.schema == "" else conn.schema
 
         # is this the best way to acccess the connection?

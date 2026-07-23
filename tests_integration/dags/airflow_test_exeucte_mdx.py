@@ -1,8 +1,7 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pandas as pd
 from airflow import DAG
-from airflow.utils.dates import days_ago
 
 from airflow_provider_tm1.operators.tm1_mdx_query import TM1MDXQueryOperator
 
@@ -25,8 +24,8 @@ def parse_and_filter(df: pd.DataFrame):
 with DAG(
         'airflow_test_execute_mdx',
         default_args=default_args,
-        schedule_interval=None,
-        start_date=days_ago(1),
+        schedule=None,
+        start_date=datetime(2025, 1, 1),
         tags=[],
         catchup=False,
         max_active_runs=1

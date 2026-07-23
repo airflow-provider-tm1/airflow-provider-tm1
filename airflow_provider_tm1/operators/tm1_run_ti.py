@@ -1,7 +1,6 @@
 from typing import Optional
 
-from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
+from airflow.providers.common.compat.sdk import BaseOperator
 
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 from TM1py.Utils import format_url
@@ -35,7 +34,6 @@ class TM1RunTIOperator(BaseOperator):
     :type tm1_params: bool
     """
 
-    @apply_defaults
     def __init__(
         self,
         process_name: str,
