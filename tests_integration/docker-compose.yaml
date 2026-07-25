@@ -291,9 +291,14 @@ services:
   tm1:
     container_name: tm1
     image: ${TM1_IMAGE:-100.109.186.25:5100/tm1-linux:24Retail}
-    #environment:
-    #  - DISPLAY=192.168.56.1:0.0
-  
+    # The TM1 entrypoint's restore-data.sh rewrites tm1s.cfg from these env
+    # vars (upsert_cfg HTTPPortNumber "$HTTP_PORT"). Without them, HTTP_PORT is
+    # empty and TM1 falls back to a non-deterministic port, so the 5360 the
+    # healthcheck + tm1_conn + host port mapping all expect is never opened.
+    environment:
+      - HTTP_PORT=5360
+      - SERVER_PORT=5001
+
     volumes:
       - ./tm1models:/docker-entrypoint-initdb.d/tm1models
       - ./cogstartup.xml:/docker-entrypoint-initdb.d/cogstartup.xml

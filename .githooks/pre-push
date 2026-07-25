@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# pre-push hook -- run the TM1 integration suite before pushing.
+#
+# Why pre-push (not pre-commit): the integration stack takes 1-5 min and would
+# make everyday commits painful. Running on push catches breakage before it
+# reaches the remote, which is the point -- CI cannot run this suite (the TM1
+# image is too large to pull to a GH-hosted runner within any timeout).
+#
+# Bypass:
+#   git push --no-verify           # git's standard hook bypass
+#   SKIP_INTEGRATION=1 git push    # same effect, explicit
+#
+# The suite only runs when files under airflow_provider_tm1/ or
+# tests_integration/ are part of the push; docs/CI-only pushes skip it.
+#
+# pre-push hooks receive refs on stdin: <local ref> <local sha> <remote ref> <remote sha>
+# We consume stdin (required) but don't gate on the branch.
+#
+set -euo pipefail
+
+# Always consume stdin so git doesn't error with a broken pipe.
+cat >/dev/null
+
+# Respect explicit bypass.
+[ "${SKIP_INTEGRATION:-0}" = "1" ] && { echo "SKIP_INTEGRATION=1 -> skipping integration suite."; exit 0; }
+
+# Locate the repo root regardless of where the hook was invoked from.
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# File gate: only run if this push touches provider code or integration config.
+# Reads the list of files in the commits being pushed vs the remote tip.
+REMOTE_SHA="" # we use the working tree's diff against origin/main as a proxy below
+changed_files="$(git diff --name-only origin/main...HEAD 2>/dev/null || git diff --name-only HEAD~10..HEAD 2>/dev/null || echo "")"
+
+if ! echo "$changed_files" | grep -qE '^(airflow_provider_tm1/|tests_integration/|Dockerfile|requirements\.txt|setup\.py|pyproject\.toml)'; then
+  echo "pre-push: no provider/integration files changed -> skipping integration suite."
+  exit 0
+fi
+
+echo "pre-push: provider/integration files changed, running TM1 integration suite ..."
+echo "          (bypass with: git push --no-verify  or  SKIP_INTEGRATION=1 git push)"
+echo
+
+cd "$REPO_ROOT"
+exec scripts/run-integration.sh
