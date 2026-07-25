@@ -1,0 +1,40 @@
+# Keep the Docker build context lean.
+# The Dockerfile only ADDs: airflow_provider_tm1/, pyproject.toml, setup.py,
+# requirements.txt, plus README.md and LICENSE (referenced by pyproject.toml).
+# Everything else is dead weight for the build and must not be sent to the daemon.
+
+# VCS & editor/tooling
+.git/
+.gitignore
+.github/
+.vscode/
+.zcode/
+
+# Python virtualenv & caches (200MB+ on dev machines)
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Docs, examples, integration tests (not needed to build the provider image)
+docs/
+example_dags/
+tests_integration/
+tests/
+
+# Misc
+uv.lock
+Dockerfile
+.dockerignore
+*.log
+*.swp
