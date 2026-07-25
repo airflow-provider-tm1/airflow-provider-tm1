@@ -1,12 +1,11 @@
 from typing import Any, Dict, Optional
 
+from airflow.exceptions import AirflowException
+from airflow.providers.common.compat.sdk import BaseHook
 from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
 from flask_babel import lazy_gettext
 from TM1py.Services import TM1Service
 from wtforms import StringField
-
-from airflow.providers.common.compat.sdk import BaseHook
-from airflow.exceptions import AirflowException
 
 
 class TM1Hook(BaseHook):
@@ -78,8 +77,9 @@ class TM1Hook(BaseHook):
                     password=self.password,
                     ssl=self.ssl,
                     namespace=self.namespace,
-                    session_context=self.session_context)
-                
+                    session_context=self.session_context,
+                )
+
                 self.server_name = self.client.server.get_server_name()
                 self.server_version = self.client.server.get_product_version()
 
@@ -124,15 +124,16 @@ class TM1Hook(BaseHook):
             "base_url": StringField(
                 lazy_gettext("BaseURL"),
                 widget=BS3TextFieldWidget(),
-                description=lazy_gettext("BaseURL encapsulates SSL, address and port for TM1 11 on-premise or address, instance, database for TM1 12"),
+                description=lazy_gettext(
+                    "BaseURL encapsulates SSL, address and port for TM1 11 on-premise or address, instance, database for TM1 12"
+                ),
             ),
         }
 
     @classmethod
     def get_ui_field_behaviour(cls) -> Dict[str, Any]:
         return {
-            "hidden_fields": [
-            ],
+            "hidden_fields": [],
             "relabeling": {
                 "host": "Address",
                 "schema": "Namespace",

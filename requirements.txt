@@ -1,5 +1,0 @@
-wheel
-build
-apache-airflow>=2.11.0
-apache-airflow-providers-common-compat>=1.16.0
-TM1py>=2.1

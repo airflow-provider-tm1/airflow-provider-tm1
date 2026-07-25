@@ -1,14 +1,14 @@
+import json
+import time
 from typing import Optional
 
 from airflow.providers.common.compat.sdk import BaseOperator
+from sqlalchemy import func
+from TM1py.Exceptions.Exceptions import TM1pyTimeout, TM1pyVersionDeprecationException
+from TM1py.Services import TM1Service
+from TM1py.Utils import format_url
 
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
-from TM1py.Utils import format_url
-import json
-import time
-from sqlalchemy import func
-from TM1py.Services import TM1Service
-from TM1py.Exceptions.Exceptions import TM1pyTimeout, TM1pyVersionDeprecationException
 
 
 class TM1RunTIOperator(BaseOperator):
@@ -17,7 +17,7 @@ class TM1RunTIOperator(BaseOperator):
 
     :param process_name: The TI process to run.
     :type process_name: str
-    
+
     :param tm1_conn_id: The Airflow connection used for TM1 credentials.
     :type tm1_conn_id: str
 
@@ -26,7 +26,7 @@ class TM1RunTIOperator(BaseOperator):
 
     :param cancel_at_timeout: Abort operation in TM1 when timeout is reached
     :type cancel_at_timeout: bool
-    
+
     :param tm1_dry_run: in Dry mode the Operator will skip the execution. Default value is False.
     :type tm1_dry_run: bool
 
@@ -39,7 +39,7 @@ class TM1RunTIOperator(BaseOperator):
         process_name: str,
         tm1_conn_id: str = "tm1_default",
         timeout: int = 300,
-        cancel_at_timeout : bool = False,
+        cancel_at_timeout: bool = False,
         tm1_dry_run: bool = False,
         tm1_params: dict = {},
         *args,
@@ -54,7 +54,7 @@ class TM1RunTIOperator(BaseOperator):
         self.tm1_dry_run = tm1_dry_run
         self.process_name = process_name
         self.tm1_params = tm1_params
-        self.tm1_params['async_request_mode'] = True
+        self.tm1_params["async_request_mode"] = True
 
     def execute(self, context: dict) -> None:
         tm1_hook = TM1Hook(tm1_conn_id=self.tm1_conn_id)
@@ -76,30 +76,44 @@ class TM1RunTIOperator(BaseOperator):
                 async_requests_mode=True,
                 return_async_id=False,
                 timeout=self.timeout,
-                cancel_at_timeout=self.cancel_at_timeout)
+                cancel_at_timeout=self.cancel_at_timeout,
+            )
 
             success, status, error_log_file = parse_ti_response(response)
             handle_tm1_process_result(error_log_file, status)
 
-
         else:
-            print("Triggering TM1 " + self.process_name + " in dry-run mode with timeout " + str(self.timeout) + " with parameters ", self.tm1_params)
+            print(
+                "Triggering TM1 "
+                + self.process_name
+                + " in dry-run mode with timeout "
+                + str(self.timeout)
+                + " with parameters ",
+                self.tm1_params,
+            )
+
 
 def parse_ti_response(response):
     execution_summary = response.json()
     success = execution_summary["ProcessExecuteStatusCode"] == "CompletedSuccessfully"
     status = execution_summary["ProcessExecuteStatusCode"]
-    error_log_file = None if execution_summary["ErrorLogFile"] is None else execution_summary["ErrorLogFile"][
-        "Filename"]
+    error_log_file = (
+        None if execution_summary["ErrorLogFile"] is None else execution_summary["ErrorLogFile"]["Filename"]
+    )
     return success, status, error_log_file
 
 
 def handle_tm1_process_result(error_log_file, status):
-    if status == 'CompletedSuccessfully':
+    if status == "CompletedSuccessfully":
         print("Process executed successfully. Status: " + status)
-    elif status == 'HasMinorErrors':
-        print( "Process executed with minor errors. Status: " + status + ". Path to error log file: " + error_log_file)
-    elif status == 'Aborted':
+    elif status == "HasMinorErrors":
+        print("Process executed with minor errors. Status: " + status + ". Path to error log file: " + error_log_file)
+    elif status == "Aborted":
         raise Exception("Process execution failed. Status: " + status + ". Path to error log file: " + error_log_file)
     else:
-        raise Exception("Process execution could have failed, Unknown status: " + status + ". Path to error log file: " + error_log_file)
+        raise Exception(
+            "Process execution could have failed, Unknown status: "
+            + status
+            + ". Path to error log file: "
+            + error_log_file
+        )

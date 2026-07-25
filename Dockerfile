@@ -23,7 +23,7 @@ RUN pip install pandas \
 RUN pip install build
 
 # Copy build metadata first so source changes don't bust the deps layer above.
-ADD --chown=airflow:root pyproject.toml setup.py requirements.txt README.md LICENSE /tmp/
+ADD --chown=airflow:root pyproject.toml setup.py README.md LICENSE /tmp/
 ADD --chown=airflow:root airflow_provider_tm1 /tmp/airflow_provider_tm1
 
 WORKDIR /tmp

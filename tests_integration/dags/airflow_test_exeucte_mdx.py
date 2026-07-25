@@ -6,13 +6,13 @@ from airflow import DAG
 from airflow_provider_tm1.operators.tm1_mdx_query import TM1MDXQueryOperator
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email': ['airflow@example.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 0,
-    'retry_delay': timedelta(minutes=5)
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email": ["airflow@example.com"],
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 0,
+    "retry_delay": timedelta(minutes=5),
 }
 
 
@@ -22,17 +22,17 @@ def parse_and_filter(df: pd.DataFrame):
 
 
 with DAG(
-        'airflow_test_execute_mdx',
-        default_args=default_args,
-        schedule=None,
-        start_date=datetime(2025, 1, 1),
-        tags=[],
-        catchup=False,
-        max_active_runs=1
+    "airflow_test_execute_mdx",
+    default_args=default_args,
+    schedule=None,
+    start_date=datetime(2025, 1, 1),
+    tags=[],
+    catchup=False,
+    max_active_runs=1,
 ) as dag:
     t1 = TM1MDXQueryOperator(
-        task_id='t1',
-        tm1_conn_id='tm1_conn',
+        task_id="t1",
+        tm1_conn_id="tm1_conn",
         mdx="""
            SELECT 
            {[test2].[test2].Members} 
@@ -42,7 +42,7 @@ with DAG(
            FROM [test1] 
            """,
         op_kwargs={"dim_ref": "test1"},
-        post_callable=parse_and_filter
+        post_callable=parse_and_filter,
     )
 
     t1

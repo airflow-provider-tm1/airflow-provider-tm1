@@ -1,0 +1,49 @@
+# pre-commit configuration.
+# Install hooks into your local git:
+#   uv run pre-commit install                # commit-stage hooks (black, isort)
+#   uv run pre-commit install --hook-type pre-push   # integration suite on push
+#
+# Run all commit-stage hooks manually:
+#   uv run pre-commit run --all-files
+#
+# The integration suite runs at the pre-push stage (it's slow: brings up the
+# full TM1 + Airflow stack). Bypass with `git push --no-verify`.
+
+minimum_pre_commit_version: "4.0"
+
+repos:
+  # Formatting -- versions pinned to match [dependency-groups].dev in pyproject.toml.
+  # pre-commit runs these in their own isolated venvs (rev-pinned), independent
+  # of the uv-managed project venv.
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  # Local hook: the TM1 integration suite. Runs only at pre-push (slow).
+  # Mirrors scripts/run-integration.sh, which brings up the docker-compose stack,
+  # waits for TM1, runs pytest, and tears down.
+  - repo: local
+    hooks:
+      - id: tm1-integration
+        name: TM1 integration suite (docker-compose stack + pytest)
+        entry: scripts/run-integration.sh
+        language: system
+        stages: [pre-push]
+        # Gate so docs/CI-only pushes skip the stack. pre-commit runs this only
+        # when files matching the regex are part of the push.
+        files: >-
+          (?x)^(
+            airflow_provider_tm1/.*|
+            tests_integration/.*|
+            Dockerfile|
+            pyproject\.toml|
+            setup\.py
+          )$
+        pass_filenames: false

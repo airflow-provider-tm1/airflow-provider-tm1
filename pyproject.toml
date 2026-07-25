@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airflow-provider-tm1"
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
 authors = [
   {name = "Akos Andras Nagy", email = "akos.nagy@knowledgeseed.ch"},
   {name = "Marius Wirtz", email = "mwirtz@cubewise.com"}
@@ -17,6 +17,14 @@ description = "A package to simplify connecting to the TM1 REST API from Apache 
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.11"
+# Runtime dependencies only. (Previously read from requirements.txt, which also
+# listed wheel/build -- those are dev tools and were wrongly shipped as runtime
+# deps in the built wheel.) uv resolves these + the dev groups below into uv.lock.
+dependencies = [
+  "apache-airflow>=2.11.0",
+  "apache-airflow-providers-common-compat>=1.16.0",
+  "TM1py>=2.1",
+]
 
 [project.urls]
 Documentation = "https://github.com/airflow-provider-tm1/airflow-provider-tm1/blob/master/README.md"
@@ -25,13 +33,29 @@ Issues = "https://github.com/airflow-provider-tm1/airflow-provider-tm1/issues"
 Changelog = "https://github.com/airflow-provider-tm1/airflow-provider-tm1/CHANGELOG.md"
 
 [tool.setuptools.packages]
-find = {namespaces = false} 
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+find = {namespaces = false}
 
 [project.entry-points."apache_airflow_provider"]
 provider_info = "airflow_provider_tm1.__init__:get_provider_info"
+
+# Dev/build tooling, managed by uv via `uv sync` (PEP 735 dependency groups).
+# NOT shipped as runtime deps of the wheel. wheel + build are needed to build
+# the distribution; pytest for the integration suite; black/isort/pre-commit
+# for local development.
+[dependency-groups]
+dev = [
+  "build>=1.0",
+  "wheel>=0.40",
+  "pytest>=8.0",
+  "black==24.10.0",
+  "isort==5.13.2",
+  "pre-commit>=4.0",
+]
+
+# uv config: lock the full env (runtime + dev groups) for reproducible installs.
+# `uv sync` installs the project + dev group into .venv.
+[tool.uv]
+package = true
 
 [tool.black]
 line-length = 120
