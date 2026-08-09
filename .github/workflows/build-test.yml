@@ -1,24 +1,74 @@
 name: Build & test Airflow
-env:
-  NAME: 'Snyk Demo'
+
 on:
   push:
-    branches: [ "main", "feature/*" ]
+    branches: ["main", "feature/*"]
   pull_request:
-    branches: [ "main", "feature/*" ]
+    branches: ["main", "feature/*"]
   pull_request_target:
     types: [opened, synchronize, reopened, labeled]
-    
   workflow_dispatch:
-  
-jobs:
 
-  build:
-    timeout-minutes: 45
+jobs:
+  # ---------------------------------------------------------------------------
+  # Fast checks: lint + unit tests. No docker stack, no tailnet secrets.
+  # Runs on every push and every PR (including fork PRs), giving contributors
+  # immediate feedback. uv-cached for speed.
+  # ---------------------------------------------------------------------------
+  fast:
+    name: Lint & unit tests
     runs-on: ubuntu-latest
-    if: (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test') && github.event.pull_request.head.repo.fork)
-      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) 
+    # Same trust boundary as the integration job below: for fork PRs, only run
+    # via pull_request_target with the 'safe to test' label.
+    if: |
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test') && github.event.pull_request.head.repo.fork)
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
       || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout (fork PR via pull_request_target)
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout (push / local PR / dispatch)
+        if: github.event_name != 'pull_request_target'
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint (black + isort via pre-commit)
+        run: uv run pre-commit run --all-files --hook-stage commit
+
+      - name: Unit tests
+        run: uv run pytest tests/unit -q
+
+  # ---------------------------------------------------------------------------
+  # Integration tests: the full TM1 + Airflow docker-compose stack.
+  # Requires the private tailnet TM1 image, so it's secrets-gated.
+  # ---------------------------------------------------------------------------
+  integration:
+    name: Integration (${{ matrix.display-name }})
+    needs: fast
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test') && github.event.pull_request.head.repo.fork)
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -29,104 +79,113 @@ jobs:
           - airflow-version: "3.0"
             base-image: "apache/airflow:3.0.6-python3.11"
             display-name: "Airflow 3.0"
-    name: Build & test (${{ matrix.display-name }})
-    
+
     steps:
-    - name: Checkout Code for fork PR
-      if: github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test')
-      uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-    
-    - name: Checkout Code for fork PR
-      if: github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test')
-      uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        
-    - name: Checkout Code for Push or local PR
-      if: github.event_name == 'push' || github.event_name == 'pull_request'
-      uses: actions/checkout@v3
+      - name: Checkout (fork PR via pull_request_target)
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.11"
+      - name: Checkout (push / local PR / dispatch)
+        if: github.event_name != 'pull_request_target'
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip build
-        python -m build
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Connect to Tailscale
-      uses: tailscale/github-action@v3
-      with:
-        oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-        oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-        tags: tag:ci
+      - name: Build provider wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
 
-    - name: Configure Docker for private registry
-      env:
-        TM1_REGISTRY: ${{ vars.TM1_REGISTRY }}
-      run: |
-        # The TM1 test image is served from a private HTTP registry on the tailnet.
-        # Trust it as an insecure registry so docker compose can pull over plain HTTP.
-        REGISTRY="${TM1_REGISTRY:-100.109.186.25:5100}"
-        REGISTRY_HOST="${REGISTRY%%:*}"
-        echo "Registry: ${REGISTRY} (host: ${REGISTRY_HOST})"
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
 
-        # Confirm the runner is on the tailnet and can reach the registry host
-        # before pulling. These are non-fatal diagnostics.
-        sudo tailscale ping "${REGISTRY_HOST}" || true
+      - name: Configure Docker for private registry
+        env:
+          TM1_REGISTRY: ${{ vars.TM1_REGISTRY }}
+        run: |
+          # The TM1 test image is served from a private HTTP registry on the tailnet.
+          # Trust it as an insecure registry so docker compose can pull over plain HTTP.
+          REGISTRY="${TM1_REGISTRY:-100.109.186.25:5100}"
+          REGISTRY_HOST="${REGISTRY%%:*}"
+          echo "Registry: ${REGISTRY} (host: ${REGISTRY_HOST})"
 
-        sudo mkdir -p /etc/docker
-        echo "{\"insecure-registries\": [\"${REGISTRY}\"]}" | sudo tee /etc/docker/daemon.json
-        sudo systemctl daemon-reload
-        sudo systemctl restart docker
+          sudo tailscale ping "${REGISTRY_HOST}" || true
 
-        # Verify the registry is reachable before pulling images.
-        curl -fsS "http://${REGISTRY}/v2/_catalog"
+          sudo mkdir -p /etc/docker
+          echo "{\"insecure-registries\": [\"${REGISTRY}\"]}" | sudo tee /etc/docker/daemon.json
+          sudo systemctl daemon-reload
+          sudo systemctl restart docker
 
-    - name: Install & Run Airflow
-      env:
-        AIRFLOW_BASE_IMAGE: ${{ matrix.base-image }}
-      run: |
-        PYPACKAGE=$(ls dist | grep .whl)
-        cd tests_integration
-        echo -e "AIRFLOW_UID=$(id -u)" > .env
-        echo -e "AIRFLOW_BASE_IMAGE=${AIRFLOW_BASE_IMAGE}" >> .env
-        docker compose up -d airflow-init
-        docker compose up -d --build
-    
-    - name: Add TM1 connection to Airflow
-      run: |
-        DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
-        TM1_CONN=$(docker exec $DOCKID airflow connections list | grep tm1_conn) || true
-        if [ -z "$TM1_CONN" ]; then
-          docker exec $DOCKID airflow connections add 'tm1_conn' --conn-json '{"conn_type": "tm1", "host": "tm1", "login": "admin", "schema": "", "port": 5360, "extra": {"ssl": "False"}}'
-        else
-          echo "Connection already added: $TM1_CONN"
-        fi
+          curl -fsS "http://${REGISTRY}/v2/_catalog"
 
-    - name: Test Airflow TM1 provider
-      run: |
-        cd tests_integration
-        echo "Running tests..."
-        pip install pytest
-        pytest integration_test.py -s
+      - name: Install & run Airflow stack
+        env:
+          AIRFLOW_BASE_IMAGE: ${{ matrix.base-image }}
+        run: |
+          PYPACKAGE=$(ls dist | grep .whl)
+          cd tests_integration
+          echo -e "AIRFLOW_UID=$(id -u)" > .env
+          echo -e "AIRFLOW_BASE_IMAGE=${AIRFLOW_BASE_IMAGE}" >> .env
+          docker compose up -d airflow-init
+          docker compose up -d --build
 
-    - name: Archive production artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: integration-test-logs-airflow-${{ matrix.airflow-version }}
-        path: |
-          tests_integration/logs/*
-          tests_integration/tm1models/24Retail/tm1server.log
-          tests_integration/tm1models/24Retail/tm1processerror*.log
-    
-    - name: Stop docker containers
-      if: always()
-      run: |
-        cd tests_integration
-        docker compose down
+      - name: Wait for TM1 to be ready
+        run: |
+          echo "Waiting for TM1 model to finish loading (cold boot can take minutes) ..."
+          TM1_CONTAINER="tm1"
+          deadline=$(( $(date +%s) + 900 ))   # 15 min cap
+          while :; do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "$TM1_CONTAINER" 2>/dev/null || echo "missing")"
+            case "$status" in
+              healthy) echo "TM1 is healthy (model loaded)."; exit 0 ;;
+              unhealthy) echo "::error::TM1 container is unhealthy. Check: docker logs $TM1_CONTAINER"; exit 1 ;;
+              missing) echo "::error::TM1 container $TM1_CONTAINER not found."; exit 1 ;;
+            esac
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::Timed out waiting for TM1 health (last status: $status)."
+              exit 1
+            fi
+            printf '.'
+            sleep 5
+          done
+
+      - name: Add TM1 connection to Airflow
+        run: |
+          DOCKID=$(docker ps -q --filter "name=tests_integration-airflow-worker-1")
+          TM1_CONN=$(docker exec $DOCKID airflow connections list 2>/dev/null | grep tm1_conn) || true
+          if [ -z "$TM1_CONN" ]; then
+            docker exec $DOCKID airflow connections add 'tm1_conn' --conn-json '{"conn_type": "tm1", "host": "tm1", "login": "admin", "schema": "", "port": 5360, "extra": {"ssl": "False"}}'
+          else
+            echo "Connection already added: $TM1_CONN"
+          fi
+
+      - name: Run integration tests
+        run: |
+          cd tests_integration
+          pip install pytest
+          pytest integration_test.py -s
+
+      - name: Archive test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-logs-airflow-${{ matrix.airflow-version }}
+          path: |
+            tests_integration/logs/*
+            tests_integration/tm1models/24Retail/tm1server.log
+            tests_integration/tm1models/24Retail/tm1processerror*.log
+
+      - name: Stop docker containers
+        if: always()
+        run: |
+          cd tests_integration
+          docker compose down

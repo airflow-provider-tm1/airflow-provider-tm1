@@ -303,10 +303,15 @@ services:
       - ./tm1models:/docker-entrypoint-initdb.d/tm1models
       - ./cogstartup.xml:/docker-entrypoint-initdb.d/cogstartup.xml
     healthcheck:
-      test: "curl -f http://localhost:5360/api/v1/"
+      # Query an authenticated, model-dependent endpoint instead of the bare API
+      # root: /api/v1/ responds as soon as the HTTP server is up, but the 24Retail
+      # model (with the test .pro processes) is still loading. ServerName/$value
+      # returns the server name only once the model has finished loading, so this
+      # gate prevents the "process can not be found" race.
+      test: "curl -sf -u admin: http://localhost:5360/api/v1/Configuration/ServerName/$value | grep -q ."
       interval: 5s
       timeout: 2m
-      retries: 10
+      retries: 30
     ports:
       - 5898:5898
       - 5360:5360
