@@ -2,7 +2,15 @@ import logging
 
 from fsspec.registry import register_implementation
 
-from .tm1 import TM1BlobStorage, get_fs
+from .tm1 import (
+    TM1Blob,
+    TM1BlobStorage,
+    TM1BufferedFile,
+    TM1FileV11,
+    TM1FileV12,
+    TM1VersionCapabilities,
+    get_fs,
+)
 
 log = logging.getLogger(__name__)
 
@@ -14,4 +22,13 @@ try:
 except Exception as e:
     log.error(f"Failed to register TM1 filesystem: {e}")
 
-__all__ = ["get_fs", "TM1BlobStorage", "schemes"]
+__all__ = [
+    "get_fs",
+    "TM1BlobStorage",
+    "TM1BufferedFile",
+    "TM1FileV11",
+    "TM1FileV12",
+    "TM1Blob",
+    "TM1VersionCapabilities",
+    "schemes",
+]

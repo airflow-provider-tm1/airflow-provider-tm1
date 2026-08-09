@@ -143,5 +143,16 @@ def test_airflow_test_dry_run():
     )
 
 
+def test_airflow_filesystem_dag():
+    command = "airflow dags test tm1_filesystem_example"
+    result, output = run_docker_exec(command)
+
+    assert_airflow_dag_completed(result)
+    assert_airflow_dag_log_contains("Sample output file written to TM1", output)
+    assert_airflow_dag_log_contains("stat: size=", output)
+    assert_airflow_dag_log_contains("Copied", output)
+    assert_airflow_dag_log_contains("test_file_copy.txt", output)
+
+
 if __name__ == "__main__":
     pytest.main()
